@@ -3,13 +3,23 @@ import torch
 from typing import List, Tuple
 from dataclasses import dataclass
 from transformers import PreTrainedTokenizer, ProcessorMixin
-from qwen_omni_utils import process_mm_info
 from PIL import Image
 
 from tevatron.retriever.arguments import DataArguments
 
 
 logger = logging.getLogger(__name__)
+
+
+def _process_mm_info(*args, **kwargs):
+    try:
+        from qwen_omni_utils import process_mm_info
+    except ImportError as exc:
+        raise ImportError(
+            "qwen_omni_utils is required for multimodal collators. "
+            "Install qwen-omni-utils to use multimodal training or encoding."
+        ) from exc
+    return process_mm_info(*args, **kwargs)
 
 
 @dataclass
@@ -161,9 +171,9 @@ class MultiModalTrainCollator:
         
 
         # audios, images, videos = process_mm_info(conversation, use_audio_in_video=False)
-        query_audio_inputs, query_image_inputs, query_video_inputs = process_mm_info(query_messages, use_audio_in_video=False)
+        query_audio_inputs, query_image_inputs, query_video_inputs = _process_mm_info(query_messages, use_audio_in_video=False)
 
-        passage_audio_inputs, passage_image_inputs, passage_video_inputs = process_mm_info(passage_messages, use_audio_in_video=False)
+        passage_audio_inputs, passage_image_inputs, passage_video_inputs = _process_mm_info(passage_messages, use_audio_in_video=False)
 
         query_inputs = self.processor(
             text=query_texts,
@@ -277,7 +287,7 @@ class MultiModalEncodeCollator:
         if self.data_args.append_eos_token:
             texts = [x[0] + '<|endoftext|>' for x in texts]
 
-        audio_inputs, image_inputs, video_inputs = process_mm_info(messages, use_audio_in_video=False)
+        audio_inputs, image_inputs, video_inputs = _process_mm_info(messages, use_audio_in_video=False)
 
         collated_inputs = self.processor(
             text=texts,
@@ -352,7 +362,7 @@ class VllmMultiModalEncodeCollator(MultiModalEncodeCollator):
             texts = [x[0] + '<|endoftext|>' for x in texts]
 
 
-        audio_inputs, image_inputs, video_inputs = process_mm_info(messages, use_audio_in_video=False)
+        audio_inputs, image_inputs, video_inputs = _process_mm_info(messages, use_audio_in_video=False)
         
         return content_ids, texts, image_inputs
 
