@@ -99,7 +99,9 @@ eval_ds() {
     --per_device_eval_batch_size 64 \
     --encode_output_path "${emb}/queries.${ds}.pkl" 2>&1 | tee "${lg}/encode-queries.log"
 
-  "${PY}" -m tevatron.retriever.driver.search \
+  # Force CPU FAISS: the installed faiss-gpu binary has no kernel for the H200
+  # (CUDA error 209 "no kernel image available"), so hide the GPU for search.
+  CUDA_VISIBLE_DEVICES="" "${PY}" -m tevatron.retriever.driver.search \
     --query_reps "${emb}/queries.${ds}.pkl" \
     --passage_reps "${emb}/corpus.${ds}.pkl" \
     --depth 100 --batch_size 64 --save_text \
