@@ -38,6 +38,13 @@ class ModelArguments:
         metadata={"help": "temperature for softmax"}
     )
 
+    bidirectional: bool = field(
+        default=False,
+        metadata={"help": "run a causal (decoder) backbone with bidirectional attention (LLM2Vec-style): "
+                          "removes the causal mask so every token attends to the full sequence. No-op / "
+                          "unnecessary for models that are already bidirectional encoders."}
+    )
+
     # for lora
     lora: bool = field(default=False,
         metadata={"help": "do parameter-efficient fine-tuning with lora"}

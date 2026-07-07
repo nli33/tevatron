@@ -124,6 +124,9 @@ class EncoderModel(nn.Module):
         base_model = cls.TRANSFORMER_CLS.from_pretrained(model_args.model_name_or_path, **hf_kwargs)
         if base_model.config.pad_token_id is None:
             base_model.config.pad_token_id = 0
+        if getattr(model_args, "bidirectional", False):
+            from .bidirectional import enable_bidirectional_attention
+            enable_bidirectional_attention(base_model)
         if model_args.lora or model_args.lora_name_or_path:
             if train_args.gradient_checkpointing:
                 base_model.enable_input_require_grads()
@@ -162,10 +165,14 @@ class EncoderModel(nn.Module):
              pooling: str = 'cls',
              normalize: bool = False,
              lora_name_or_path: str = None,
+             bidirectional: bool = False,
              **hf_kwargs):
         base_model = cls.TRANSFORMER_CLS.from_pretrained(model_name_or_path, **hf_kwargs)
         if base_model.config.pad_token_id is None:
             base_model.config.pad_token_id = 0
+        if bidirectional:
+            from .bidirectional import enable_bidirectional_attention
+            enable_bidirectional_attention(base_model)
         if lora_name_or_path:
             lora_config = LoraConfig.from_pretrained(lora_name_or_path, **hf_kwargs)
             lora_model = PeftModel.from_pretrained(base_model, lora_name_or_path, config=lora_config)
